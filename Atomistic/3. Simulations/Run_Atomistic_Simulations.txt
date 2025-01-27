@@ -1,0 +1,25 @@
+gmx pdb2gmx -ff oplsaa -f 2_10_chains_${numberchains}_sulf_${numberofrepeatunits}.pdb -water spc -o structure.gro
+echo "pdb2gmx done"
+
+gmx editconf -f structure.gro -o system.gro -bt cubic -d 1.0
+echo "box done"
+
+gmx solvate -cp system.gro -o solvate.gro -p topol.top
+echo "solvated"
+
+gmx grompp -f minim.mdp -c solvate.gro -p topol.top -o minim.tpr
+gmx mdrun -s minim.tpr -deffnm min
+echo "minimize"
+
+gmx grompp -f NVT_Equilibration.mdp -c min.gro -p topol.top -o nvt.tpr
+gmx mdrun -s nvt.tpr -deffnm nvt
+echo "NVT Done"
+
+gmx grompp -f NPT_Equilibration.mdp -c nvt.gro -r nvt.gro -p topol.top -o npt.tpr
+gmx mdrun -s npt.tpr -deffnm npt
+echo "NPT Done"
+
+
+gmx grompp -f md.mdp -c npt.gro -r npt.gro -t npt.cpt -p topol.top -o md.tpr
+gmx mdrun -s md.tpr -deffnm prod 
+echo "DONE!!"
